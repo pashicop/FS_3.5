@@ -1,4 +1,8 @@
 # FS_3.5
+# 1
+Sparse файл – файл, в котором последовательности нулевых байтов заменены на информацию об этих последовательностях. 
+# 2
+Не могут иметь разные права доступа и владельца, т.к. имеют один и тот же Inode
 # 4
 Разбил диск sdb
 ```
@@ -280,7 +284,87 @@ sdc                         8:32   0  2.5G  0 disk
 ```
 # 15
 ```
-    root@vagrant:/tmp/new# gzip -t test.gz
+root@vagrant:/tmp/new# gzip -t test.gz
+root@vagrant:/tmp/new# echo $?
+0
+```
+# 16
+```
+root@vagrant:/tmp/new# pvmove /dev/md126 /dev/md127
+  /dev/md126: Moved: 48.00%
+  /dev/md126: Moved: 100.00%
+root@vagrant:/tmp/new# lsblk
+NAME                      MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
+loop0                       7:0    0 55.5M  1 loop  /snap/core18/2284
+loop1                       7:1    0 67.2M  1 loop  /snap/lxd/21835
+loop2                       7:2    0 55.4M  1 loop  /snap/core18/2128
+loop3                       7:3    0 61.9M  1 loop  /snap/core20/1328
+loop4                       7:4    0 70.3M  1 loop  /snap/lxd/21029
+loop5                       7:5    0 43.4M  1 loop  /snap/snapd/14549
+loop6                       7:6    0 32.3M  1 loop  /snap/snapd/12704
+sda                         8:0    0   64G  0 disk
+├─sda1                      8:1    0    1M  0 part
+├─sda2                      8:2    0    1G  0 part  /boot
+└─sda3                      8:3    0   63G  0 part
+  └─ubuntu--vg-ubuntu--lv 253:0    0 31.5G  0 lvm   /
+sdb                         8:16   0  2.5G  0 disk
+├─sdb1                      8:17   0    2G  0 part
+│ └─md127                   9:127  0    2G  0 raid1
+│   └─vg1-lvol0           253:1    0  100M  0 lvm   /tmp/new
+└─sdb2                      8:18   0  511M  0 part
+  └─md126                   9:126  0 1018M  0 raid0
+sdc                         8:32   0  2.5G  0 disk
+├─sdc1                      8:33   0    2G  0 part
+│ └─md127                   9:127  0    2G  0 raid1
+│   └─vg1-lvol0           253:1    0  100M  0 lvm   /tmp/new
+└─sdc2                      8:34   0  511M  0 part
+  └─md126                   9:126  0 1018M  0 raid0
+  ```
+# 17
+
+```
+root@vagrant:/tmp/new# mdadm /dev/md127 -f /dev/sdc1
+mdadm: set /dev/sdc1 faulty in /dev/md127
+root@vagrant:/tmp/new# mdadm --detail /dev/md127
+/dev/md127:
+           Version : 1.2
+     Creation Time : Fri Feb  4 22:22:14 2022
+        Raid Level : raid1
+        Array Size : 2094080 (2045.00 MiB 2144.34 MB)
+     Used Dev Size : 2094080 (2045.00 MiB 2144.34 MB)
+      Raid Devices : 2
+     Total Devices : 2
+       Persistence : Superblock is persistent
+
+       Update Time : Sun Feb  6 17:43:34 2022
+             State : clean, degraded
+    Active Devices : 1
+   Working Devices : 1
+    Failed Devices : 1
+     Spare Devices : 0
+
+Consistency Policy : resync
+
+              Name : vagrant:R1  (local to host vagrant)
+              UUID : 42999888:42f78c1e:213db259:8b0e12e6
+            Events : 24
+
+    Number   Major   Minor   RaidDevice State
+       0       8       17        0      active sync   /dev/sdb1
+       -       0        0        1      removed
+
+       1       8       33        -      faulty   /dev/sdc1
+```
+# 18
+```
+root@vagrant:/tmp/new# dmesg
+...
+  [ 5321.372501] md/raid1:md127: Disk failure on sdc1, disabling device.
+               md/raid1:md127: Operation continuing on 1 devices.
+```
+# 19
+```
+root@vagrant:/tmp/new# gzip -t /tmp/new/test.gz
 root@vagrant:/tmp/new# echo $?
 0
 ```
